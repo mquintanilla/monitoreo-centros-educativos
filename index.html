@@ -14,6 +14,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.1/leaflet.markercluster.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
         * {
@@ -23,17 +24,17 @@
         }
 
         :root {
-            --primary-color: #1a472a;
-            --secondary-color: #2d5f3f;
-            --accent-color: #4CAF50;
+            --primary-color: #003d82;
+            --secondary-color: #005bb8;
+            --accent-color: #0066cc;
             --light-bg: #f5f5f5;
             --border-color: #ddd;
             --text-dark: #333;
             --text-light: #666;
-            --success: #4CAF50;
+            --success: #0066cc;
             --danger: #f44336;
             --warning: #ff9800;
-            --info: #2196F3;
+            --info: #0066cc;
         }
 
         body {
@@ -93,9 +94,9 @@
         }
 
         .btn-primary:hover {
-            background-color: #45a049;
+            background-color: #0052a3;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
         }
 
         .btn-secondary {
@@ -108,11 +109,84 @@
             background-color: rgba(255, 255, 255, 0.3);
         }
 
+        /* HOME VIEW - Dashboard Principal */
+        .home-container {
+            display: none;
+            min-height: calc(100vh - 80px);
+            background: white;
+            padding: 40px 20px;
+        }
+
+        .home-container.active {
+            display: block;
+        }
+
+        .home-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .stat-card {
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 20px rgba(0, 102, 204, 0.15);
+            border-color: var(--accent-color);
+        }
+
+        .stat-card.active {
+            background: linear-gradient(135deg, rgba(0, 102, 204, 0.05) 0%, rgba(0, 102, 204, 0.02) 100%);
+            border-color: var(--accent-color);
+        }
+
+        .stat-icon {
+            font-size: 48px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 42px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .stat-subtitle {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
         /* MAIN CONTAINER */
         .container {
             display: flex;
             height: calc(100vh - 80px);
             position: relative;
+            display: none;
+        }
+
+        .container.active {
+            display: flex;
         }
 
         /* SIDEBAR */
@@ -140,14 +214,6 @@
 
         .sidebar-header h2 {
             font-size: 18px;
-            color: var(--primary-color);
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
             color: var(--primary-color);
         }
 
@@ -181,7 +247,7 @@
         }
 
         .nav-item.active {
-            background-color: rgba(76, 175, 80, 0.1);
+            background-color: rgba(0, 102, 204, 0.1);
             border-left-color: var(--accent-color);
             color: var(--primary-color);
             font-weight: 600;
@@ -219,9 +285,10 @@
 
         /* CONTENT AREA */
         .content-wrapper {
-            display: flex;
             flex: 1;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .map-container {
@@ -231,7 +298,7 @@
         }
 
         .map-container.active {
-            display: block;
+            display: flex;
         }
 
         #map {
@@ -269,51 +336,6 @@
             display: none;
         }
 
-        /* CARDS SECTION */
-        .cards-section {
-            padding: 20px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            background: white;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .card {
-            background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-        }
-
-        .card-icon {
-            font-size: 32px;
-            margin-bottom: 10px;
-            color: var(--primary-color);
-        }
-
-        .card-value {
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--primary-color);
-            margin: 10px 0;
-        }
-
-        .card-label {
-            font-size: 13px;
-            color: var(--text-light);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
         /* FILTERS SECTION */
         .filters-section {
             padding: 20px;
@@ -349,7 +371,7 @@
         .search-box:focus {
             outline: none;
             border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
         }
 
         .filters-grid {
@@ -387,7 +409,7 @@
         .filter-group input:focus {
             outline: none;
             border-color: var(--accent-color);
-            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+            box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
         }
 
         .filter-actions {
@@ -469,11 +491,40 @@
         }
 
         tbody tr:hover {
-            background-color: rgba(76, 175, 80, 0.05);
+            background-color: rgba(0, 102, 204, 0.05);
         }
 
         tbody tr:nth-child(even) {
             background-color: #fafafa;
+        }
+
+        /* DASHBOARD */
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .chart-box {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        .chart-box h3 {
+            margin: 0 0 15px 0;
+            color: var(--primary-color);
+            font-size: 16px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
         }
 
         /* MODAL */
@@ -528,87 +579,7 @@
             color: var(--text-light);
         }
 
-        /* DASHBOARD */
-        .dashboard-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            padding: 20px;
-            height: 100%;
-            overflow-y: auto;
-        }
-
-        .chart-box {
-            background: white;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-        }
-
-        .chart-box h3 {
-            margin: 0 0 15px 0;
-            color: var(--primary-color);
-            font-size: 16px;
-        }
-
-        .chart-wrapper {
-            position: relative;
-            height: 300px;
-        }
-
-        /* RESPONSIVE */
-        @media (max-width: 1200px) {
-            .filters-grid {
-                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            }
-
-            .cards-section {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                height: calc(100vh - 60px);
-            }
-
-            .sidebar {
-                width: 100%;
-                position: absolute;
-                height: 100%;
-            }
-
-            .sidebar.closed {
-                transform: translateX(-100%);
-            }
-
-            .toggle-sidebar.show {
-                display: flex;
-            }
-
-            .cards-section {
-                grid-template-columns: 1fr;
-                padding: 15px;
-            }
-
-            .filters-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .header {
-                padding: 15px 20px;
-            }
-
-            .header-content h1 {
-                font-size: 20px;
-            }
-
-            .dashboard-container {
-                grid-template-columns: 1fr;
-            }
-        }
-
+        /* PAGINATION */
         .pagination {
             display: flex;
             justify-content: center;
@@ -639,53 +610,41 @@
             color: var(--text-light);
         }
 
-        .loading {
-            text-align: center;
-            padding: 40px;
-        }
-
-        .spinner {
-            border: 4px solid var(--light-bg);
-            border-top: 4px solid var(--accent-color);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
         }
 
-        .status-badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
+        @media (max-width: 768px) {
+            .header {
+                padding: 15px 20px;
+            }
 
-        .status-success {
-            background-color: rgba(76, 175, 80, 0.2);
-            color: #2e7d32;
-        }
+            .header-content h1 {
+                font-size: 20px;
+            }
 
-        .status-warning {
-            background-color: rgba(255, 152, 0, 0.2);
-            color: #e65100;
-        }
+            .home-grid {
+                grid-template-columns: 1fr;
+            }
 
-        .status-danger {
-            background-color: rgba(244, 67, 54, 0.2);
-            color: #c62828;
+            .sidebar {
+                width: 100%;
+                position: absolute;
+                height: 100%;
+            }
+
+            .sidebar.closed {
+                transform: translateX(-100%);
+            }
+
+            .toggle-sidebar.show {
+                display: flex;
+            }
+
+            .dashboard-container {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -703,19 +662,25 @@
         </div>
     </div>
 
+    <!-- HOME VIEW - Dashboard Principal -->
+    <div class="home-container active" id="homeView">
+        <div class="home-grid" id="homeGrid">
+            <!-- Las tarjetas se cargarán dinámicamente -->
+        </div>
+    </div>
+
     <!-- MAIN CONTAINER -->
-    <div class="container">
+    <div class="container" id="mainContainer">
         <!-- SIDEBAR -->
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <h2>Opciones</h2>
-                <button class="close-btn" id="closeSidebar">
+                <h2>Vistas</h2>
+                <button class="close-btn" id="closeSidebar" style="background: none; border: none; cursor: pointer; color: var(--primary-color); font-size: 20px;">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
 
             <div class="nav-section">
-                <div class="nav-title">Vistas</div>
                 <div class="nav-item active" data-view="analysis">
                     <i class="fas fa-table"></i> Análisis de Datos
                 </div>
@@ -729,14 +694,17 @@
 
             <div class="nav-section">
                 <div class="nav-title">Acciones</div>
-                <div class="nav-item" id="exportBtn">
+                <div class="nav-item" id="exportExcelBtn">
                     <i class="fas fa-download"></i> Exportar Excel
+                </div>
+                <div class="nav-item" id="exportPdfBtn">
+                    <i class="fas fa-file-pdf"></i> Exportar PDF
                 </div>
                 <div class="nav-item" id="screenshotBtn">
                     <i class="fas fa-camera"></i> Captura de Mapa
                 </div>
                 <div class="nav-item" id="resetBtn">
-                    <i class="fas fa-redo"></i> Restablecer Filtros
+                    <i class="fas fa-redo"></i> Restablecer
                 </div>
             </div>
 
@@ -756,30 +724,6 @@
         <div class="main-content">
             <!-- ANALYSIS VIEW -->
             <div class="analysis-container active" id="analysisView">
-                <!-- CARDS -->
-                <div class="cards-section">
-                    <div class="card">
-                        <div class="card-icon"><i class="fas fa-school"></i></div>
-                        <div class="card-label">Total de Centros</div>
-                        <div class="card-value" id="totalCenters">0</div>
-                    </div>
-                    <div class="card">
-                        <div class="card-icon"><i class="fas fa-file-contract"></i></div>
-                        <div class="card-label">Con Contrato</div>
-                        <div class="card-value" id="centersWithContract">0</div>
-                    </div>
-                    <div class="card">
-                        <div class="card-icon"><i class="fas fa-filter"></i></div>
-                        <div class="card-label">Seleccionados</div>
-                        <div class="card-value" id="selectedCenters">0</div>
-                    </div>
-                    <div class="card">
-                        <div class="card-icon"><i class="fas fa-chart-pie"></i></div>
-                        <div class="card-label">% Contratados</div>
-                        <div class="card-value" id="percentageContracted">0%</div>
-                    </div>
-                </div>
-
                 <!-- FILTERS -->
                 <div class="filters-section">
                     <div class="filters-header">
@@ -792,13 +736,6 @@
                         <div class="filter-group">
                             <label>Grupo</label>
                             <select id="groupFilter">
-                                <option value="">Todos</option>
-                            </select>
-                        </div>
-
-                        <div class="filter-group">
-                            <label>Código</label>
-                            <select id="codeFilter">
                                 <option value="">Todos</option>
                             </select>
                         </div>
@@ -825,21 +762,6 @@
                         </div>
 
                         <div class="filter-group">
-                            <label>Número de Contrato</label>
-                            <select id="contractFilter">
-                                <option value="">Todos</option>
-                                <option value="contracted">Con Contrato</option>
-                            </select>
-                        </div>
-
-                        <div class="filter-group">
-                            <label>Empresa Supervisión</label>
-                            <select id="supervisionCompanyFilter">
-                                <option value="">Todos</option>
-                            </select>
-                        </div>
-
-                        <div class="filter-group">
                             <label>Etapa</label>
                             <select id="stageFilter">
                                 <option value="">Todos</option>
@@ -847,30 +769,18 @@
                         </div>
 
                         <div class="filter-group">
-                            <label>Estado PEGAS Diseño</label>
-                            <select id="pegasDesignFilter">
+                            <label>Contrato</label>
+                            <select id="contractFilter">
                                 <option value="">Todos</option>
-                            </select>
-                        </div>
-
-                        <div class="filter-group">
-                            <label>Estado PEGAS Ejecución</label>
-                            <select id="pegasExecutionFilter">
-                                <option value="">Todos</option>
-                            </select>
-                        </div>
-
-                        <div class="filter-group">
-                            <label>Reubicación Temporal</label>
-                            <select id="relocationFilter">
-                                <option value="">Todos</option>
+                                <option value="contracted">Con Contrato</option>
+                                <option value="unassigned">Sin Asignar</option>
                             </select>
                         </div>
                     </div>
 
                     <div class="filter-actions">
                         <button class="btn btn-primary" id="applyFilters">
-                            <i class="fas fa-check"></i> Aplicar Filtros
+                            <i class="fas fa-check"></i> Aplicar
                         </button>
                         <button class="btn btn-secondary" id="clearFilters">
                             <i class="fas fa-times"></i> Limpiar
@@ -882,9 +792,7 @@
                 <div class="table-section">
                     <div class="table-header">
                         <h3>Registros</h3>
-                        <div class="table-actions">
-                            <span id="recordCount" style="font-size: 13px; color: var(--text-light);">0 registros</span>
-                        </div>
+                        <span id="recordCount" style="font-size: 13px; color: var(--text-light);">0 registros</span>
                     </div>
                     <div class="table-wrapper">
                         <table id="dataTable">
@@ -894,7 +802,7 @@
                             <tbody id="tableBody"></tbody>
                         </table>
                         <div id="emptyState" class="no-data" style="display: none;">
-                            No hay datos que mostrar. Ajusta los filtros e intenta de nuevo.
+                            No hay datos que mostrar. Ajusta los filtros.
                         </div>
                     </div>
                     <div class="pagination" id="pagination"></div>
@@ -916,32 +824,29 @@
 
             <!-- DASHBOARD VIEW -->
             <div class="analysis-container hidden" id="dashboardView">
-                <div style="padding: 20px; overflow-y: auto; flex: 1;">
-                    <h2 style="color: var(--primary-color); margin-bottom: 20px;">Dashboard de Análisis</h2>
-                    <div class="dashboard-container">
-                        <div class="chart-box">
-                            <h3>Distribución por Departamento</h3>
-                            <div class="chart-wrapper">
-                                <canvas id="departmentChart"></canvas>
-                            </div>
+                <div class="dashboard-container">
+                    <div class="chart-box">
+                        <h3>Distribución por Departamento</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="departmentChart"></canvas>
                         </div>
-                        <div class="chart-box">
-                            <h3>Estado de Proyectos</h3>
-                            <div class="chart-wrapper">
-                                <canvas id="stageChart"></canvas>
-                            </div>
+                    </div>
+                    <div class="chart-box">
+                        <h3>Estado de Proyectos</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="stageChart"></canvas>
                         </div>
-                        <div class="chart-box">
-                            <h3>Estado PEGAS Diseño</h3>
-                            <div class="chart-wrapper">
-                                <canvas id="pegasDesignChart"></canvas>
-                            </div>
+                    </div>
+                    <div class="chart-box">
+                        <h3>Distribución por Empresa Obras</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="worksCompanyChart"></canvas>
                         </div>
-                        <div class="chart-box">
-                            <h3>Estado PEGAS Ejecución</h3>
-                            <div class="chart-wrapper">
-                                <canvas id="pegasExecutionChart"></canvas>
-                            </div>
+                    </div>
+                    <div class="chart-box">
+                        <h3>Etapas por Avance</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="advanceChart"></canvas>
                         </div>
                     </div>
                 </div>
@@ -950,35 +855,6 @@
     </div>
 
     <!-- MODALS -->
-    <div id="helpModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Ayuda y Guía de Uso</h2>
-                <button class="close-modal" onclick="closeModal('helpModal')">&times;</button>
-            </div>
-            <div>
-                <h3 style="color: var(--primary-color); margin-top: 20px;">Funcionalidades Principales</h3>
-                <ul style="line-height: 1.8; margin-left: 20px;">
-                    <li><strong>Análisis de Datos:</strong> Visualiza y filtra todos los registros de centros educativos.</li>
-                    <li><strong>Mapa Interactivo:</strong> Localiza los centros en el mapa de El Salvador.</li>
-                    <li><strong>Dashboard:</strong> Análisis cruzado con gráficos estadísticos.</li>
-                    <li><strong>Filtros:</strong> Refina los resultados según múltiples criterios.</li>
-                    <li><strong>Exportar:</strong> Descarga los datos en formato Excel.</li>
-                    <li><strong>Capturas:</strong> Guarda imágenes del mapa y análisis.</li>
-                </ul>
-
-                <h3 style="color: var(--primary-color); margin-top: 20px;">Cómo usar los filtros</h3>
-                <p>1. Selecciona los criterios deseados en la sección de filtros.</p>
-                <p>2. Haz clic en "Aplicar Filtros" para actualizar los resultados.</p>
-                <p>3. Usa "Limpiar" para restablecer todos los filtros.</p>
-                <p>4. Los filtros se pueden combinar para búsquedas más precisas.</p>
-
-                <h3 style="color: var(--primary-color); margin-top: 20px;">Búsqueda Rápida</h3>
-                <p>Utiliza el campo de búsqueda para encontrar centros por código o nombre de forma instantánea.</p>
-            </div>
-        </div>
-    </div>
-
     <div id="aboutModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -987,30 +863,43 @@
             </div>
             <div>
                 <h3 style="color: var(--primary-color);">Monitoreo de Condiciones Ambientales y Sociales</h3>
-                <p><strong>Versión:</strong> 1.0</p>
+                <p><strong>Versión:</strong> 2.0</p>
                 <p><strong>Programa:</strong> Mi Nueva Escuela</p>
                 <p><strong>Institución:</strong> MINEDUCYT</p>
                 <p><strong>Financiador:</strong> BCIE 2256</p>
+                <p><strong>Desarrollo:</strong> Martín Quintanilla</p>
 
                 <h3 style="color: var(--primary-color); margin-top: 20px;">Características</h3>
                 <ul style="line-height: 1.8; margin-left: 20px;">
                     <li>Gestión de datos de centros educativos</li>
                     <li>Visualización geográfica en mapas interactivos</li>
                     <li>Análisis estadístico en tiempo real</li>
-                    <li>Exportación de datos en Excel</li>
+                    <li>Exportación en Excel y PDF</li>
                     <li>Captura de pantalla de mapas</li>
                     <li>Interfaz responsiva y moderna</li>
                 </ul>
-
-                <h3 style="color: var(--primary-color); margin-top: 20px;">Tecnologías Utilizadas</h3>
-                <p>• Leaflet.js (Mapas)</p>
-                <p>• Chart.js (Gráficos)</p>
-                <p>• SheetJS/XLSX (Manejo de Excel)</p>
-                <p>• HTML5 / CSS3 / JavaScript</p>
             </div>
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Ayuda y Guía de Uso</h2>
+                <button class="close-modal" onclick="closeModal('helpModal')">&times;</button>
+            </div>
+            <div>
+                <h3 style="color: var(--primary-color);">Funcionalidades Principales</h3>
+                <ul style="line-height: 1.8; margin-left: 20px;">
+                    <li><strong>Análisis de Datos:</strong> Visualiza y filtra todos los registros.</li>
+                    <li><strong>Mapa Interactivo:</strong> Localiza centros en El Salvador.</li>
+                    <li><strong>Dashboard:</strong> Análisis cruzado con gráficos.</li>
+                    <li><strong>Exportar:</strong> Descarga datos en Excel o PDF.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="app-v2.js"></script>
 </body>
 </html>

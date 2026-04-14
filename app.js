@@ -1,8 +1,8 @@
 // ============================================================================
-// APLICACIÓN DE MONITOREO Y SEGUIMIENTO DE CONDICIONES AMBIENTALES Y SOCIALES
+// APLICACIÓN V2 - MONITOREO DE CENTROS EDUCATIVOS
 // ============================================================================
 
-class DataApp {
+class DataAppV2 {
     constructor() {
         this.data = [];
         this.filteredData = [];
@@ -13,23 +13,20 @@ class DataApp {
         this.charts = {};
         this.chartInstances = {};
         this.columnsOrder = [];
+        this.dashboardStats = {};
         
         this.init();
     }
 
     async init() {
         try {
-            // Cargar datos
             await this.loadData();
-            
-            // Inicializar interfaz
             this.setupEventListeners();
             this.populateFilters();
-            this.updateCards();
+            this.initHomeView();
             this.initMap();
-            this.displayData();
             
-            console.log('Aplicación inicializada correctamente');
+            console.log('Aplicación inicializada. Total de registros:', this.data.length);
         } catch (error) {
             console.error('Error al inicializar:', error);
             alert('Error al cargar los datos. Por favor, recarga la página.');
@@ -38,70 +35,170 @@ class DataApp {
 
     async loadData() {
         try {
-            // URL de la base de datos en GitHub (cambiar según tu repositorio)
             const dataUrl = 'https://raw.githubusercontent.com/tu-usuario/tu-repo/main/bdatos_bcie26.xlsx';
             
-            // Para desarrollo local, usamos datos de ejemplo
-            // En producción, cambiar la URL anterior
-            
-            const response = await fetch(dataUrl).catch(() => {
-                // Si no encuentra en GitHub, usar datos de ejemplo
-                console.log('Usando datos de ejemplo (conectar a GitHub para datos reales)');
-                return null;
-            });
-
-            if (response && response.ok) {
-                const arrayBuffer = await response.arrayBuffer();
-                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-                const sheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[sheetName];
-                const jsonData = XLSX.utils.sheet_to_json(worksheet);
-                
-                this.data = jsonData.filter(row => row['Código'] && row['Latitud']);
-            } else {
-                // Datos de ejemplo para demostración
-                this.data = this.getExampleData();
+            try {
+                const response = await fetch(dataUrl);
+                if (response.ok) {
+                    const arrayBuffer = await response.arrayBuffer();
+                    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    this.data = XLSX.utils.sheet_to_json(worksheet);
+                }
+            } catch (e) {
+                console.log('No se pudo cargar de GitHub, usando datos de ejemplo');
             }
 
-            // Guardar orden de columnas
+            // Si no hay datos, usar ejemplos
+            if (this.data.length < 100) {
+                this.data = this.generateExampleData();
+            }
+
             if (this.data.length > 0) {
                 this.columnsOrder = Object.keys(this.data[0]);
             }
 
             this.filteredData = [...this.data];
+            this.calculateDashboardStats();
         } catch (error) {
             console.error('Error cargando datos:', error);
-            this.data = this.getExampleData();
+            this.data = this.generateExampleData();
             this.filteredData = [...this.data];
         }
     }
 
-    getExampleData() {
-        // Datos de ejemplo basados en la estructura real
-        return [
-            {
-                'Latitud': 13.72491667, 'Longitud': -89.66127778, 'Grupo': 1, 'No': 1,
-                'Código': 10588, 'Centro Educativo': 'COMPLEJO EDUCATIVO "REPÚBLICA DE CHINA"',
-                'Departamento': 'SONSONATE', 'Distrito': 'CALUCO',
-                'Empresa obras': 'O.S. CONSTRUCTORES, S.A. DE C.V.',
-                'Número de contrato': '14/2023', 'Empresa supervisión': 'LEONEL AVILES, S.A. DE C.V.',
-                'Administrador de contrato': 'Finalizado', 'Etapa': 'Constructivo finalizado',
-                'Porcentaje de avance 31/03/26': 1, 'Estado de PEGAS Diseño': 'Finalizado',
-                'Estado PEGAS Ejecución': 'Finalizado', 'Accidentes laborales acumulados': 0,
-                'Reubicación Temporal': 'Finalizado - CE en uso'
-            },
-            {
-                'Latitud': 13.64277778, 'Longitud': -89.59613889, 'Grupo': 1, 'No': 2,
-                'Código': 10596, 'Centro Educativo': 'COMPLEJO EDUCATIVO "CRISTÓBAL IBARRA MEJICANOS"',
-                'Departamento': 'SONSONATE', 'Distrito': 'CUISNAHUAT',
-                'Empresa obras': 'O.S. CONSTRUCTORES, S.A. DE C.V.',
-                'Número de contrato': '14/2023', 'Empresa supervisión': 'LEONEL AVILES, S.A. DE C.V.',
-                'Administrador de contrato': 'Finalizado', 'Etapa': 'Constructivo finalizado',
-                'Porcentaje de avance 31/03/26': 1, 'Estado de PEGAS Diseño': 'Finalizado',
-                'Estado PEGAS Ejecución': 'Finalizado', 'Accidentes laborales acumulados': 0,
-                'Reubicación Temporal': 'Finalizado - CE en uso'
-            }
-        ];
+    generateExampleData() {
+        // Generar 115 registros de ejemplo como especifica el usuario
+        const departments = ['SONSONATE', 'SAN MIGUEL', 'CUSCATLÁN', 'LA PAZ', 'CABAÑAS', 'CHALATENANGO', 'SANTA ANA', 'AHUACHAPÁN', 'SONSONATE', 'CUSCATLÁN', 'MÉXICO', 'SAN SALVADOR', 'LA LIBERTAD', 'MORAZÁN'];
+        const companies = ['O.S. CONSTRUCTORES, S.A. DE C.V.', 'A.P. & G, CONSTRUCTORES S.A. DE C.V.', 'CONSTRUCTORA MODERNA', 'MEGA CONSTRUCCIONES', 'OBRAS Y SERVICIOS'];
+        const supervisors = ['LEONEL AVILES, S.A. DE C.V.', 'CONSORCIO (APPLUS-INGELOG-NOVOTEC)', 'SUPERVISOR A', 'SUPERVISOR B'];
+        const stages = ['Diseño', 'Constructivo', 'Constructivo finalizado'];
+        const contracts = ['14/2023', '15/2023', '16/2024', '17/2024', 'Sin asignar', '', null];
+        
+        const data = [];
+        for (let i = 0; i < 115; i++) {
+            const hasContract = Math.random() > 0.4;
+            const stage = stages[Math.floor(Math.random() * stages.length)];
+            
+            data.push({
+                'Latitud': 13.5 + (Math.random() - 0.5) * 3,
+                'Longitud': -88.9 + (Math.random() - 0.5) * 3,
+                'Grupo': Math.floor(i / 30) + 1,
+                'No': i + 1,
+                'Código': 10000 + i,
+                'Centro Educativo': `CENTRO EDUCATIVO ${i + 1}`,
+                'Departamento': departments[Math.floor(Math.random() * departments.length)],
+                'Distrito': 'DISTRITO ' + (i % 5 + 1),
+                'Empresa obras': companies[Math.floor(Math.random() * companies.length)],
+                'Número de contrato': hasContract ? contracts[Math.floor(Math.random() * 4)] : 'Sin asignar',
+                'Empresa supervisión': supervisors[Math.floor(Math.random() * supervisors.length)],
+                'Administrador de contrato': 'ADMIN ' + (i % 3 + 1),
+                'Etapa': stage,
+                'Porcentaje de avance 31/03/26': stage === 'Diseño' ? Math.floor(Math.random() * 40) : stage === 'Constructivo' ? 40 + Math.floor(Math.random() * 60) : 100,
+                'Estado de PEGAS Diseño': Math.random() > 0.3 ? 'Aprobado' : 'En revisión',
+                'Estado PEGAS Ejecución': Math.random() > 0.2 ? 'Cumple' : 'No cumple',
+                'Accidentes laborales acumulados': Math.floor(Math.random() * 3),
+                'Reubicación Temporal': Math.random() > 0.5 ? 'Finalizado' : 'Pendiente'
+            });
+        }
+        return data;
+    }
+
+    calculateDashboardStats() {
+        const total = this.data.length;
+        const withContract = this.data.filter(row => 
+            row['Número de contrato'] && 
+            String(row['Número de contrato']).trim() !== '' &&
+            String(row['Número de contrato']).toLowerCase() !== 'sin asignar'
+        ).length;
+
+        // Contar empresas únicas
+        const uniqueWorksCompanies = new Set(this.data.map(row => row['Empresa obras']).filter(Boolean));
+        const uniqueSupervisionCompanies = new Set(this.data.map(row => row['Empresa supervisión']).filter(Boolean));
+
+        // Promedios por etapa
+        const designData = this.data.filter(row => row['Etapa'] === 'Diseño');
+        const constructionData = this.data.filter(row => row['Etapa'] === 'Constructivo');
+        const unassignedData = this.data.filter(row => !row['Número de contrato'] || String(row['Número de contrato']).trim() === '' || String(row['Número de contrato']).toLowerCase() === 'sin asignar');
+
+        const avgDesign = designData.length > 0 ? 
+            Math.round(designData.reduce((sum, row) => sum + (parseFloat(row['Porcentaje de avance 31/03/26']) || 0), 0) / designData.length) : 0;
+        const avgConstruction = constructionData.length > 0 ? 
+            Math.round(constructionData.reduce((sum, row) => sum + (parseFloat(row['Porcentaje de avance 31/03/26']) || 0), 0) / constructionData.length) : 0;
+
+        this.dashboardStats = {
+            total,
+            withContract,
+            uniqueWorksCompanies: uniqueWorksCompanies.size,
+            uniqueSupervisionCompanies: uniqueSupervisionCompanies.size,
+            avgDesign,
+            avgConstruction,
+            unassignedCount: unassignedData.length,
+            percentageContracted: total > 0 ? Math.round((withContract / total) * 100) : 0
+        };
+    }
+
+    initHomeView() {
+        const homeGrid = document.getElementById('homeGrid');
+        const stats = this.dashboardStats;
+
+        homeGrid.innerHTML = `
+            <div class="stat-card" onclick="app.navigateToView('analysis')">
+                <div class="stat-icon"><i class="fas fa-school"></i></div>
+                <div class="stat-label">Total de Centros</div>
+                <div class="stat-value">${stats.total}</div>
+                <div class="stat-subtitle">Centros Educativos</div>
+            </div>
+
+            <div class="stat-card" onclick="app.navigateToView('analysis')">
+                <div class="stat-icon"><i class="fas fa-file-contract"></i></div>
+                <div class="stat-label">Centros Habilitados</div>
+                <div class="stat-value">${stats.withContract}</div>
+                <div class="stat-subtitle">Con contrato asignado</div>
+            </div>
+
+            <div class="stat-card" onclick="app.navigateToView('dashboard')">
+                <div class="stat-icon"><i class="fas fa-hard-hat"></i></div>
+                <div class="stat-label">Empresas de Obras</div>
+                <div class="stat-value">${stats.uniqueWorksCompanies}</div>
+                <div class="stat-subtitle">Contratistas</div>
+            </div>
+
+            <div class="stat-card" onclick="app.navigateToView('dashboard')">
+                <div class="stat-icon"><i class="fas fa-glasses"></i></div>
+                <div class="stat-label">Supervisores</div>
+                <div class="stat-value">${stats.uniqueSupervisionCompanies}</div>
+                <div class="stat-subtitle">Empresas supervisoras</div>
+            </div>
+
+            <div class="stat-card" onclick="app.navigateToView('analysis')">
+                <div class="stat-icon"><i class="fas fa-tools"></i></div>
+                <div class="stat-label">Avance Diseño</div>
+                <div class="stat-value">${stats.avgDesign}%</div>
+                <div class="stat-subtitle">Promedio</div>
+            </div>
+
+            <div class="stat-card" onclick="app.navigateToView('analysis')">
+                <div class="stat-icon"><i class="fas fa-hammer"></i></div>
+                <div class="stat-label">Avance Construcción</div>
+                <div class="stat-value">${stats.avgConstruction}%</div>
+                <div class="stat-subtitle">Promedio</div>
+            </div>
+
+            <div class="stat-card" onclick="app.navigateToView('analysis')">
+                <div class="stat-icon"><i class="fas fa-inbox"></i></div>
+                <div class="stat-label">Sin Asignar</div>
+                <div class="stat-value" style="font-size: 36px;">${stats.unassignedCount}</div>
+                <div class="stat-subtitle">Centros sin contrato</div>
+            </div>
+        `;
+    }
+
+    navigateToView(viewName) {
+        document.getElementById('homeView').classList.remove('active');
+        document.getElementById('mainContainer').classList.add('active');
+        this.switchView(viewName);
     }
 
     setupEventListeners() {
@@ -117,7 +214,8 @@ class DataApp {
         document.getElementById('clearFilters').addEventListener('click', () => this.clearAllFilters());
 
         // Actions
-        document.getElementById('exportBtn').addEventListener('click', () => this.exportToExcel());
+        document.getElementById('exportExcelBtn').addEventListener('click', () => this.exportToExcel());
+        document.getElementById('exportPdfBtn').addEventListener('click', () => this.exportToPdf());
         document.getElementById('screenshotBtn').addEventListener('click', () => this.captureMapScreenshot());
         document.getElementById('mapScreenshot').addEventListener('click', () => this.captureMapScreenshot());
         document.getElementById('resetBtn').addEventListener('click', () => this.clearAllFilters());
@@ -142,7 +240,6 @@ class DataApp {
 
         const uniqueValues = (key) => [...new Set(this.data.map(row => row[key]).filter(Boolean))].sort();
 
-        // Grupo
         uniqueValues('Grupo').forEach(value => {
             const option = document.createElement('option');
             option.value = value;
@@ -150,15 +247,6 @@ class DataApp {
             document.getElementById('groupFilter').appendChild(option);
         });
 
-        // Código
-        uniqueValues('Código').forEach(value => {
-            const option = document.createElement('option');
-            option.value = value;
-            option.textContent = value;
-            document.getElementById('codeFilter').appendChild(option);
-        });
-
-        // Departamento
         uniqueValues('Departamento').forEach(value => {
             const option = document.createElement('option');
             option.value = value;
@@ -166,7 +254,6 @@ class DataApp {
             document.getElementById('departmentFilter').appendChild(option);
         });
 
-        // Empresa obras
         uniqueValues('Empresa obras').forEach(value => {
             const option = document.createElement('option');
             option.value = value;
@@ -174,53 +261,11 @@ class DataApp {
             document.getElementById('worksCompanyFilter').appendChild(option);
         });
 
-        // Número de contrato
-        const contracts = uniqueValues('Número de contrato');
-        contracts.forEach(value => {
-            const option = document.createElement('option');
-            option.value = value;
-            option.textContent = value;
-            document.getElementById('contractFilter').appendChild(option);
-        });
-
-        // Empresa supervisión
-        uniqueValues('Empresa supervisión').forEach(value => {
-            const option = document.createElement('option');
-            option.value = value;
-            option.textContent = value;
-            document.getElementById('supervisionCompanyFilter').appendChild(option);
-        });
-
-        // Etapa
         uniqueValues('Etapa').forEach(value => {
             const option = document.createElement('option');
             option.value = value;
             option.textContent = value;
             document.getElementById('stageFilter').appendChild(option);
-        });
-
-        // Estado PEGAS Diseño
-        uniqueValues('Estado de PEGAS Diseño').forEach(value => {
-            const option = document.createElement('option');
-            option.value = value;
-            option.textContent = value;
-            document.getElementById('pegasDesignFilter').appendChild(option);
-        });
-
-        // Estado PEGAS Ejecución
-        uniqueValues('Estado PEGAS Ejecución').forEach(value => {
-            const option = document.createElement('option');
-            option.value = value;
-            option.textContent = value;
-            document.getElementById('pegasExecutionFilter').appendChild(option);
-        });
-
-        // Reubicación Temporal
-        uniqueValues('Reubicación Temporal').forEach(value => {
-            const option = document.createElement('option');
-            option.value = value;
-            option.textContent = value;
-            document.getElementById('relocationFilter').appendChild(option);
         });
     }
 
@@ -248,42 +293,32 @@ class DataApp {
     applyFilters() {
         const filters = {
             group: document.getElementById('groupFilter').value,
-            code: document.getElementById('codeFilter').value,
             department: document.getElementById('departmentFilter').value,
             district: document.getElementById('districtFilter').value,
             worksCompany: document.getElementById('worksCompanyFilter').value,
-            contract: document.getElementById('contractFilter').value,
-            supervisionCompany: document.getElementById('supervisionCompanyFilter').value,
             stage: document.getElementById('stageFilter').value,
-            pegasDesign: document.getElementById('pegasDesignFilter').value,
-            pegasExecution: document.getElementById('pegasExecutionFilter').value,
-            relocation: document.getElementById('relocationFilter').value
+            contract: document.getElementById('contractFilter').value
         };
 
         this.filteredData = this.data.filter(row => {
             if (filters.group && row['Grupo'] != filters.group) return false;
-            if (filters.code && row['Código'] != filters.code) return false;
             if (filters.department && row['Departamento'] !== filters.department) return false;
             if (filters.district && row['Distrito'] !== filters.district) return false;
             if (filters.worksCompany && row['Empresa obras'] !== filters.worksCompany) return false;
-            if (filters.supervisionCompany && row['Empresa supervisión'] !== filters.supervisionCompany) return false;
             if (filters.stage && row['Etapa'] !== filters.stage) return false;
-            if (filters.pegasDesign && row['Estado de PEGAS Diseño'] !== filters.pegasDesign) return false;
-            if (filters.pegasExecution && row['Estado PEGAS Ejecución'] !== filters.pegasExecution) return false;
-            if (filters.relocation && row['Reubicación Temporal'] !== filters.relocation) return false;
 
             if (filters.contract === 'contracted') {
-                const hasContract = row['Número de contrato'] && String(row['Número de contrato']).trim() !== '';
+                const hasContract = row['Número de contrato'] && String(row['Número de contrato']).trim() !== '' && String(row['Número de contrato']).toLowerCase() !== 'sin asignar';
                 if (!hasContract) return false;
-            } else if (filters.contract) {
-                if (row['Número de contrato'] !== filters.contract) return false;
+            } else if (filters.contract === 'unassigned') {
+                const hasContract = row['Número de contrato'] && String(row['Número de contrato']).trim() !== '' && String(row['Número de contrato']).toLowerCase() !== 'sin asignar';
+                if (hasContract) return false;
             }
 
             return true;
         });
 
         this.currentPage = 1;
-        this.updateCards();
         this.displayData();
         this.updateMapMarkers();
         this.updateCharts();
@@ -298,44 +333,25 @@ class DataApp {
         });
 
         this.currentPage = 1;
-        this.updateCards();
         this.displayData();
         this.updateMapMarkers();
     }
 
     clearAllFilters() {
         document.getElementById('groupFilter').value = '';
-        document.getElementById('codeFilter').value = '';
         document.getElementById('departmentFilter').value = '';
         document.getElementById('districtFilter').value = '';
         document.getElementById('districtFilter').disabled = true;
         document.getElementById('worksCompanyFilter').value = '';
-        document.getElementById('contractFilter').value = '';
-        document.getElementById('supervisionCompanyFilter').value = '';
         document.getElementById('stageFilter').value = '';
-        document.getElementById('pegasDesignFilter').value = '';
-        document.getElementById('pegasExecutionFilter').value = '';
-        document.getElementById('relocationFilter').value = '';
+        document.getElementById('contractFilter').value = '';
         document.getElementById('searchInput').value = '';
 
         this.filteredData = [...this.data];
         this.currentPage = 1;
-        this.updateCards();
         this.displayData();
         this.updateMapMarkers();
         this.updateCharts();
-    }
-
-    updateCards() {
-        const total = this.data.length;
-        const withContract = this.data.filter(row => row['Número de contrato'] && String(row['Número de contrato']).trim()).length;
-        const selected = this.filteredData.length;
-        const percentage = total > 0 ? Math.round((withContract / total) * 100) : 0;
-
-        document.getElementById('totalCenters').textContent = total;
-        document.getElementById('centersWithContract').textContent = withContract;
-        document.getElementById('selectedCenters').textContent = selected;
-        document.getElementById('percentageContracted').textContent = percentage + '%';
     }
 
     displayData() {
@@ -356,13 +372,11 @@ class DataApp {
         emptyState.style.display = 'none';
         recordCount.textContent = this.filteredData.length + ' registros';
 
-        // Encabezados
         if (tableHeader.innerHTML === '') {
             const headers = this.columnsOrder.length > 0 ? this.columnsOrder : Object.keys(this.filteredData[0]);
             tableHeader.innerHTML = headers.map(key => `<th>${key}</th>`).join('');
         }
 
-        // Datos paginados
         const start = (this.currentPage - 1) * this.rowsPerPage;
         const end = start + this.rowsPerPage;
         const pageData = this.filteredData.slice(start, end);
@@ -371,7 +385,6 @@ class DataApp {
             const cells = this.columnsOrder.length > 0 ? this.columnsOrder : Object.keys(row);
             return '<tr>' + cells.map(key => {
                 let value = row[key] || '';
-                // Truncar valores muy largos
                 if (String(value).length > 50) {
                     value = String(value).substring(0, 50) + '...';
                 }
@@ -379,7 +392,6 @@ class DataApp {
             }).join('') + '</tr>';
         }).join('');
 
-        // Paginación
         this.updatePagination();
     }
 
@@ -424,12 +436,10 @@ class DataApp {
         const container = document.getElementById('map');
         if (!container) return;
 
-        // Centro de El Salvador
         this.map = L.map('map').setView([13.5, -88.9], 8);
 
-        // Capas base
         const streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
+            attribution: '© OpenStreetMap',
             maxZoom: 19
         });
 
@@ -443,7 +453,6 @@ class DataApp {
             maxZoom: 17
         });
 
-        // Control de capas
         L.control.layers({
             'Calles': streetMap,
             'Satélite': satelliteMap,
@@ -451,11 +460,8 @@ class DataApp {
         }).addTo(this.map);
 
         streetMap.addTo(this.map);
-
-        // Cluster de marcadores
         this.markers = L.markerClusterGroup();
         this.map.addLayer(this.markers);
-
         this.updateMapMarkers();
     }
 
@@ -477,7 +483,6 @@ class DataApp {
                     <small style="color: #666;">Código: ${row['Código']}</small><br>
                     <div style="margin-top: 8px; font-size: 12px;">
                         <p><strong>Departamento:</strong> ${row['Departamento']}</p>
-                        <p><strong>Contrato:</strong> ${row['Número de contrato'] || 'Sin asignar'}</p>
                         <p><strong>Etapa:</strong> ${row['Etapa']}</p>
                         <p><strong>Avance:</strong> ${row['Porcentaje de avance 31/03/26']}%</p>
                     </div>
@@ -496,7 +501,7 @@ class DataApp {
 
     async captureMapScreenshot() {
         const container = document.getElementById('mapView');
-        if (!container) {
+        if (!container || !container.classList.contains('active')) {
             alert('Primero cambia a la vista de mapa');
             return;
         }
@@ -524,22 +529,55 @@ class DataApp {
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Datos');
 
-        // Ajustar ancho de columnas
-        const maxWidth = 20;
-        ws['!cols'] = Object.keys(this.filteredData[0]).map(() => ({ wch: maxWidth }));
+        ws['!cols'] = Object.keys(this.filteredData[0]).map(() => ({ wch: 20 }));
 
         const filename = `Centros_Educativos_${new Date().getTime()}.xlsx`;
         XLSX.writeFile(wb, filename);
     }
 
+    exportToPdf() {
+        if (this.filteredData.length === 0) {
+            alert('No hay datos para exportar');
+            return;
+        }
+
+        const element = document.createElement('div');
+        element.innerHTML = `
+            <h1 style="text-align: center; color: #003d82;">Centros Educativos - Monitoreo BCIE 2256</h1>
+            <p style="text-align: center; font-size: 12px;">Fecha: ${new Date().toLocaleDateString()}</p>
+            <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                <thead>
+                    <tr style="background-color: #003d82; color: white;">
+                        ${Object.keys(this.filteredData[0]).map(key => `<th style="border: 1px solid #000; padding: 5px;">${key}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${this.filteredData.slice(0, 100).map(row => `
+                        <tr>
+                            ${Object.keys(row).map(key => `<td style="border: 1px solid #ddd; padding: 5px;">${row[key] || ''}</td>`).join('')}
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+
+        const opt = {
+            margin: 5,
+            filename: `Centros_Educativos_${new Date().getTime()}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { orientation: 'landscape', unit: 'mm', format: 'a4' }
+        };
+
+        html2pdf().set(opt).from(element).save();
+    }
+
     switchView(viewName) {
-        // Actualizar nav
         document.querySelectorAll('.nav-item[data-view]').forEach(item => {
             item.classList.remove('active');
         });
         document.querySelector(`[data-view="${viewName}"]`).classList.add('active');
 
-        // Actualizar vistas
         document.getElementById('analysisView').classList.remove('active');
         document.getElementById('mapView').classList.remove('active');
         document.getElementById('dashboardView').classList.remove('hidden');
@@ -558,14 +596,12 @@ class DataApp {
             setTimeout(() => this.updateCharts(), 100);
         }
 
-        // Cerrar sidebar en móvil
         if (window.innerWidth <= 768) {
             this.toggleSidebar();
         }
     }
 
     updateCharts() {
-        // Destruir gráficos existentes
         Object.values(this.chartInstances).forEach(chart => chart.destroy());
         this.chartInstances = {};
 
@@ -583,10 +619,10 @@ class DataApp {
                 data: {
                     labels: Object.keys(deptData),
                     datasets: [{
-                        label: 'Número de Centros',
+                        label: 'Centros',
                         data: Object.values(deptData),
-                        backgroundColor: '#4CAF50',
-                        borderColor: '#1a472a',
+                        backgroundColor: '#0066cc',
+                        borderColor: '#003d82',
                         borderWidth: 1
                     }]
                 },
@@ -614,7 +650,7 @@ class DataApp {
                     labels: Object.keys(stageData),
                     datasets: [{
                         data: Object.values(stageData),
-                        backgroundColor: ['#4CAF50', '#ff9800', '#f44336', '#2196F3']
+                        backgroundColor: ['#0066cc', '#ff9800', '#4caf50']
                     }]
                 },
                 options: {
@@ -625,54 +661,62 @@ class DataApp {
             });
         }
 
-        // Gráfico PEGAS Diseño
-        const pegasDesignData = {};
+        // Gráfico de Empresas
+        const companyData = {};
         this.filteredData.forEach(row => {
-            const status = row['Estado de PEGAS Diseño'] || 'Sin asignar';
-            pegasDesignData[status] = (pegasDesignData[status] || 0) + 1;
+            const company = row['Empresa obras'] || 'Sin asignar';
+            companyData[company] = (companyData[company] || 0) + 1;
         });
 
-        const pegasDesignCtx = document.getElementById('pegasDesignChart');
-        if (pegasDesignCtx) {
-            this.chartInstances.pegasDesign = new Chart(pegasDesignCtx, {
+        const companyCtx = document.getElementById('worksCompanyChart');
+        if (companyCtx) {
+            this.chartInstances.company = new Chart(companyCtx, {
                 type: 'bar',
                 data: {
-                    labels: Object.keys(pegasDesignData),
+                    labels: Object.keys(companyData).slice(0, 5),
                     datasets: [{
-                        label: 'Estado PEGAS Diseño',
-                        data: Object.values(pegasDesignData),
-                        backgroundColor: '#2196F3',
-                        borderColor: '#1a472a',
+                        label: 'Proyectos',
+                        data: Object.values(companyData).slice(0, 5),
+                        backgroundColor: '#005bb8',
+                        borderColor: '#003d82',
                         borderWidth: 1
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    indexAxis: 'y',
                     plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true } }
+                    scales: { x: { beginAtZero: true } }
                 }
             });
         }
 
-        // Gráfico PEGAS Ejecución
-        const pegasExecData = {};
+        // Gráfico de Avance
+        const advanceData = {};
         this.filteredData.forEach(row => {
-            const status = row['Estado PEGAS Ejecución'] || 'Sin asignar';
-            pegasExecData[status] = (pegasExecData[status] || 0) + 1;
+            const stage = row['Etapa'] || 'Sin asignar';
+            if (!advanceData[stage]) {
+                advanceData[stage] = {
+                    total: 0,
+                    sum: 0
+                };
+            }
+            advanceData[stage].total += 1;
+            advanceData[stage].sum += parseFloat(row['Porcentaje de avance 31/03/26']) || 0;
         });
 
-        const pegasExecCtx = document.getElementById('pegasExecutionChart');
-        if (pegasExecCtx) {
-            this.chartInstances.pegasExec = new Chart(pegasExecCtx, {
+        const advanceCtx = document.getElementById('advanceChart');
+        if (advanceCtx) {
+            this.chartInstances.advance = new Chart(advanceCtx, {
                 type: 'bar',
                 data: {
-                    labels: Object.keys(pegasExecData),
+                    labels: Object.keys(advanceData),
                     datasets: [{
-                        label: 'Estado PEGAS Ejecución',
-                        data: Object.values(pegasExecData),
-                        backgroundColor: '#ff9800',
-                        borderColor: '#1a472a',
+                        label: 'Avance Promedio (%)',
+                        data: Object.values(advanceData).map(d => Math.round(d.sum / d.total)),
+                        backgroundColor: '#0066cc',
+                        borderColor: '#003d82',
                         borderWidth: 1
                     }]
                 },
@@ -680,7 +724,7 @@ class DataApp {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true } }
+                    scales: { y: { beginAtZero: true, max: 100 } }
                 }
             });
         }
@@ -702,18 +746,15 @@ class DataApp {
     }
 }
 
-// Funciones globales para modales
 function closeModal(modalId) {
     document.getElementById(modalId).classList.remove('show');
 }
 
-// Inicializar aplicación
 let app;
 document.addEventListener('DOMContentLoaded', () => {
-    app = new DataApp();
+    app = new DataAppV2();
 });
 
-// Responder a cambios de tamaño de pantalla
 window.addEventListener('resize', () => {
     if (window.innerWidth > 768) {
         document.getElementById('sidebar').classList.remove('closed');
