@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoreo de Condiciones Ambientales y Sociales - MINEDUCYT</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.1/MarkerCluster.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.1/MarkerCluster.Default.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.1/leaflet.markercluster.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #1a472a;
+            --secondary-color: #2d5f3f;
+            --accent-color: #4CAF50;
+            --light-bg: #f5f5f5;
+            --border-color: #ddd;
+            --text-dark: #333;
+            --text-light: #666;
+            --success: #4CAF50;
+            --danger: #f44336;
+            --warning: #ff9800;
+            --info: #2196F3;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        /* HEADER */
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 20px 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .header-content p {
+            font-size: 14px;
+            opacity: 0.95;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* MAIN CONTAINER */
+        .container {
+            display: flex;
+            height: calc(100vh - 80px);
+            position: relative;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 300px;
+            background: white;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            position: relative;
+            z-index: 50;
+        }
+
+        .sidebar.closed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 2px solid var(--primary-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-header h2 {
+            font-size: 18px;
+            color: var(--primary-color);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--primary-color);
+        }
+
+        .nav-section {
+            padding: 0;
+        }
+
+        .nav-title {
+            padding: 15px 20px 10px;
+            font-weight: 600;
+            color: var(--primary-color);
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-left: 3px solid transparent;
+            transition: all 0.3s ease;
+            color: var(--text-dark);
+        }
+
+        .nav-item:hover {
+            background-color: var(--light-bg);
+            border-left-color: var(--accent-color);
+        }
+
+        .nav-item.active {
+            background-color: rgba(76, 175, 80, 0.1);
+            border-left-color: var(--accent-color);
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .toggle-sidebar {
+            position: fixed;
+            left: 20px;
+            top: 90px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 49;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-sidebar.show {
+            display: flex;
+        }
+
+        /* CONTENT AREA */
+        .content-wrapper {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .map-container {
+            flex: 1;
+            position: relative;
+            display: none;
+        }
+
+        .map-container.active {
+            display: block;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .map-controls {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .map-controls .btn {
+            width: 45px;
+            height: 45px;
+            padding: 0;
+            border-radius: 50%;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .analysis-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .analysis-container.hidden {
+            display: none;
+        }
+
+        /* CARDS SECTION */
+        .cards-section {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card {
+            background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .card-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 10px 0;
+        }
+
+        .card-label {
+            font-size: 13px;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* FILTERS SECTION */
+        .filters-section {
+            padding: 20px;
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .filters-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .filters-header h3 {
+            font-size: 16px;
+            color: var(--primary-color);
+            margin: 0;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 13px;
+            background: white;
+            color: var(--text-dark);
+            transition: all 0.3s ease;
+        }
+
+        .filter-group select:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .filter-actions .btn {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        /* TABLE SECTION */
+        .table-section {
+            flex: 1;
+            padding: 20px;
+            background: white;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .table-header h3 {
+            font-size: 16px;
+            color: var(--primary-color);
+            margin: 0;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .table-wrapper {
+            flex: 1;
+            overflow: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            font-size: 13px;
+        }
+
+        thead {
+            background: var(--primary-color);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            white-space: nowrap;
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+        }
+
+        tbody tr:hover {
+            background-color: rgba(76, 175, 80, 0.05);
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: var(--primary-color);
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-light);
+        }
+
+        /* DASHBOARD */
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .chart-box {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        .chart-box h3 {
+            margin: 0 0 15px 0;
+            color: var(--primary-color);
+            font-size: 16px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1200px) {
+            .filters-grid {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            }
+
+            .cards-section {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                height: calc(100vh - 60px);
+            }
+
+            .sidebar {
+                width: 100%;
+                position: absolute;
+                height: 100%;
+            }
+
+            .sidebar.closed {
+                transform: translateX(-100%);
+            }
+
+            .toggle-sidebar.show {
+                display: flex;
+            }
+
+            .cards-section {
+                grid-template-columns: 1fr;
+                padding: 15px;
+            }
+
+            .filters-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                padding: 15px 20px;
+            }
+
+            .header-content h1 {
+                font-size: 20px;
+            }
+
+            .dashboard-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .pagination button {
+            padding: 6px 10px;
+            border: 1px solid var(--border-color);
+            background: white;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .pagination button.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-light);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid var(--light-bg);
+            border-top: 4px solid var(--accent-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-success {
+            background-color: rgba(76, 175, 80, 0.2);
+            color: #2e7d32;
+        }
+
+        .status-warning {
+            background-color: rgba(255, 152, 0, 0.2);
+            color: #e65100;
+        }
+
+        .status-danger {
+            background-color: rgba(244, 67, 54, 0.2);
+            color: #c62828;
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <div class="header">
+        <div class="header-content">
+            <h1>Monitoreo y Seguimiento de Condiciones Ambientales y Sociales</h1>
+            <p>Programa Mi Nueva Escuela | MINEDUCYT | BCIE 2256</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-secondary" id="helpBtn" title="Ayuda">
+                <i class="fas fa-question-circle"></i> Ayuda
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="container">
+        <!-- SIDEBAR -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>Opciones</h2>
+                <button class="close-btn" id="closeSidebar">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-title">Vistas</div>
+                <div class="nav-item active" data-view="analysis">
+                    <i class="fas fa-table"></i> Análisis de Datos
+                </div>
+                <div class="nav-item" data-view="map">
+                    <i class="fas fa-map"></i> Mapa Interactivo
+                </div>
+                <div class="nav-item" data-view="dashboard">
+                    <i class="fas fa-chart-bar"></i> Dashboard
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-title">Acciones</div>
+                <div class="nav-item" id="exportBtn">
+                    <i class="fas fa-download"></i> Exportar Excel
+                </div>
+                <div class="nav-item" id="screenshotBtn">
+                    <i class="fas fa-camera"></i> Captura de Mapa
+                </div>
+                <div class="nav-item" id="resetBtn">
+                    <i class="fas fa-redo"></i> Restablecer Filtros
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-title">Información</div>
+                <div class="nav-item" id="aboutBtn">
+                    <i class="fas fa-info-circle"></i> Acerca de
+                </div>
+            </div>
+        </div>
+
+        <button class="toggle-sidebar" id="toggleSidebar" title="Mostrar menú">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <!-- ANALYSIS VIEW -->
+            <div class="analysis-container active" id="analysisView">
+                <!-- CARDS -->
+                <div class="cards-section">
+                    <div class="card">
+                        <div class="card-icon"><i class="fas fa-school"></i></div>
+                        <div class="card-label">Total de Centros</div>
+                        <div class="card-value" id="totalCenters">0</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon"><i class="fas fa-file-contract"></i></div>
+                        <div class="card-label">Con Contrato</div>
+                        <div class="card-value" id="centersWithContract">0</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon"><i class="fas fa-filter"></i></div>
+                        <div class="card-label">Seleccionados</div>
+                        <div class="card-value" id="selectedCenters">0</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon"><i class="fas fa-chart-pie"></i></div>
+                        <div class="card-label">% Contratados</div>
+                        <div class="card-value" id="percentageContracted">0%</div>
+                    </div>
+                </div>
+
+                <!-- FILTERS -->
+                <div class="filters-section">
+                    <div class="filters-header">
+                        <h3>Filtros</h3>
+                    </div>
+
+                    <input type="text" class="search-box" id="searchInput" placeholder="🔍 Buscar por código o centro educativo...">
+
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label>Grupo</label>
+                            <select id="groupFilter">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Código</label>
+                            <select id="codeFilter">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Departamento</label>
+                            <select id="departmentFilter">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Distrito</label>
+                            <select id="districtFilter" disabled>
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Empresa Obras</label>
+                            <select id="worksCompanyFilter">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Número de Contrato</label>
+                            <select id="contractFilter">
+                                <option value="">Todos</option>
+                                <option value="contracted">Con Contrato</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Empresa Supervisión</label>
+                            <select id="supervisionCompanyFilter">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Etapa</label>
+                            <select id="stageFilter">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Estado PEGAS Diseño</label>
+                            <select id="pegasDesignFilter">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Estado PEGAS Ejecución</label>
+                            <select id="pegasExecutionFilter">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Reubicación Temporal</label>
+                            <select id="relocationFilter">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="filter-actions">
+                        <button class="btn btn-primary" id="applyFilters">
+                            <i class="fas fa-check"></i> Aplicar Filtros
+                        </button>
+                        <button class="btn btn-secondary" id="clearFilters">
+                            <i class="fas fa-times"></i> Limpiar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TABLE -->
+                <div class="table-section">
+                    <div class="table-header">
+                        <h3>Registros</h3>
+                        <div class="table-actions">
+                            <span id="recordCount" style="font-size: 13px; color: var(--text-light);">0 registros</span>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table id="dataTable">
+                            <thead>
+                                <tr id="tableHeader"></tr>
+                            </thead>
+                            <tbody id="tableBody"></tbody>
+                        </table>
+                        <div id="emptyState" class="no-data" style="display: none;">
+                            No hay datos que mostrar. Ajusta los filtros e intenta de nuevo.
+                        </div>
+                    </div>
+                    <div class="pagination" id="pagination"></div>
+                </div>
+            </div>
+
+            <!-- MAP VIEW -->
+            <div class="map-container" id="mapView">
+                <div id="map"></div>
+                <div class="map-controls">
+                    <button class="btn btn-primary" id="centerMap" title="Centrar en El Salvador">
+                        <i class="fas fa-crosshairs"></i>
+                    </button>
+                    <button class="btn btn-primary" id="mapScreenshot" title="Captura del mapa">
+                        <i class="fas fa-camera"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- DASHBOARD VIEW -->
+            <div class="analysis-container hidden" id="dashboardView">
+                <div style="padding: 20px; overflow-y: auto; flex: 1;">
+                    <h2 style="color: var(--primary-color); margin-bottom: 20px;">Dashboard de Análisis</h2>
+                    <div class="dashboard-container">
+                        <div class="chart-box">
+                            <h3>Distribución por Departamento</h3>
+                            <div class="chart-wrapper">
+                                <canvas id="departmentChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-box">
+                            <h3>Estado de Proyectos</h3>
+                            <div class="chart-wrapper">
+                                <canvas id="stageChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-box">
+                            <h3>Estado PEGAS Diseño</h3>
+                            <div class="chart-wrapper">
+                                <canvas id="pegasDesignChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-box">
+                            <h3>Estado PEGAS Ejecución</h3>
+                            <div class="chart-wrapper">
+                                <canvas id="pegasExecutionChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Ayuda y Guía de Uso</h2>
+                <button class="close-modal" onclick="closeModal('helpModal')">&times;</button>
+            </div>
+            <div>
+                <h3 style="color: var(--primary-color); margin-top: 20px;">Funcionalidades Principales</h3>
+                <ul style="line-height: 1.8; margin-left: 20px;">
+                    <li><strong>Análisis de Datos:</strong> Visualiza y filtra todos los registros de centros educativos.</li>
+                    <li><strong>Mapa Interactivo:</strong> Localiza los centros en el mapa de El Salvador.</li>
+                    <li><strong>Dashboard:</strong> Análisis cruzado con gráficos estadísticos.</li>
+                    <li><strong>Filtros:</strong> Refina los resultados según múltiples criterios.</li>
+                    <li><strong>Exportar:</strong> Descarga los datos en formato Excel.</li>
+                    <li><strong>Capturas:</strong> Guarda imágenes del mapa y análisis.</li>
+                </ul>
+
+                <h3 style="color: var(--primary-color); margin-top: 20px;">Cómo usar los filtros</h3>
+                <p>1. Selecciona los criterios deseados en la sección de filtros.</p>
+                <p>2. Haz clic en "Aplicar Filtros" para actualizar los resultados.</p>
+                <p>3. Usa "Limpiar" para restablecer todos los filtros.</p>
+                <p>4. Los filtros se pueden combinar para búsquedas más precisas.</p>
+
+                <h3 style="color: var(--primary-color); margin-top: 20px;">Búsqueda Rápida</h3>
+                <p>Utiliza el campo de búsqueda para encontrar centros por código o nombre de forma instantánea.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="aboutModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Acerca de esta Aplicación</h2>
+                <button class="close-modal" onclick="closeModal('aboutModal')">&times;</button>
+            </div>
+            <div>
+                <h3 style="color: var(--primary-color);">Monitoreo de Condiciones Ambientales y Sociales</h3>
+                <p><strong>Versión:</strong> 1.0</p>
+                <p><strong>Programa:</strong> Mi Nueva Escuela</p>
+                <p><strong>Institución:</strong> MINEDUCYT</p>
+                <p><strong>Financiador:</strong> BCIE 2256</p>
+
+                <h3 style="color: var(--primary-color); margin-top: 20px;">Características</h3>
+                <ul style="line-height: 1.8; margin-left: 20px;">
+                    <li>Gestión de datos de centros educativos</li>
+                    <li>Visualización geográfica en mapas interactivos</li>
+                    <li>Análisis estadístico en tiempo real</li>
+                    <li>Exportación de datos en Excel</li>
+                    <li>Captura de pantalla de mapas</li>
+                    <li>Interfaz responsiva y moderna</li>
+                </ul>
+
+                <h3 style="color: var(--primary-color); margin-top: 20px;">Tecnologías Utilizadas</h3>
+                <p>• Leaflet.js (Mapas)</p>
+                <p>• Chart.js (Gráficos)</p>
+                <p>• SheetJS/XLSX (Manejo de Excel)</p>
+                <p>• HTML5 / CSS3 / JavaScript</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
