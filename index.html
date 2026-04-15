@@ -3,903 +3,315 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoreo de Condiciones Ambientales y Sociales - MINEDUCYT</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.1/MarkerCluster.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.1/MarkerCluster.Default.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.1/leaflet.markercluster.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <title>Monitoreo Ambiental - Mi Nueva Escuela</title>
     
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --primary-color: #003d82;
-            --secondary-color: #005bb8;
-            --accent-color: #0066cc;
-            --light-bg: #f5f5f5;
-            --border-color: #ddd;
-            --text-dark: #333;
-            --text-light: #666;
-            --success: #0066cc;
-            --danger: #f44336;
-            --warning: #ff9800;
-            --info: #0066cc;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--light-bg);
-            color: var(--text-dark);
-            line-height: 1.6;
-        }
-
-        /* HEADER */
-        .header {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            color: white;
-            padding: 20px 30px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .header-content h1 {
-            font-size: 28px;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-
-        .header-content p {
-            font-size: 14px;
-            opacity: 0.95;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-primary {
-            background-color: var(--accent-color);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: #0052a3;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
-        }
-
-        .btn-secondary {
-            background-color: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .btn-secondary:hover {
-            background-color: rgba(255, 255, 255, 0.3);
-        }
-
-        /* HOME VIEW - Dashboard Principal */
-        .home-container {
-            display: none;
-            min-height: calc(100vh - 80px);
-            background: white;
-            padding: 40px 20px;
-        }
-
-        .home-container.active {
-            display: block;
-        }
-
-        .home-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .stat-card {
-            background: white;
-            border: 2px solid var(--border-color);
-            border-radius: 12px;
-            padding: 30px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        }
-
-        .stat-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 8px 20px rgba(0, 102, 204, 0.15);
-            border-color: var(--accent-color);
-        }
-
-        .stat-card.active {
-            background: linear-gradient(135deg, rgba(0, 102, 204, 0.05) 0%, rgba(0, 102, 204, 0.02) 100%);
-            border-color: var(--accent-color);
-        }
-
-        .stat-icon {
-            font-size: 48px;
-            color: var(--primary-color);
-            margin-bottom: 15px;
-        }
-
-        .stat-label {
-            font-size: 13px;
-            color: var(--text-light);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-        }
-
-        .stat-value {
-            font-size: 42px;
-            font-weight: 700;
-            color: var(--primary-color);
-            margin-bottom: 10px;
-        }
-
-        .stat-subtitle {
-            font-size: 12px;
-            color: var(--text-light);
-        }
-
-        /* MAIN CONTAINER */
-        .container {
-            display: flex;
-            height: calc(100vh - 80px);
-            position: relative;
-            display: none;
-        }
-
-        .container.active {
-            display: flex;
-        }
-
-        /* SIDEBAR */
-        .sidebar {
-            width: 300px;
-            background: white;
-            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
-            overflow-y: auto;
-            transition: transform 0.3s ease;
-            position: relative;
-            z-index: 50;
-        }
-
-        .sidebar.closed {
-            transform: translateX(-100%);
-        }
-
-        .sidebar-header {
-            padding: 20px;
-            border-bottom: 2px solid var(--primary-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .sidebar-header h2 {
-            font-size: 18px;
-            color: var(--primary-color);
-        }
-
-        .nav-section {
-            padding: 0;
-        }
-
-        .nav-title {
-            padding: 15px 20px 10px;
-            font-weight: 600;
-            color: var(--primary-color);
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .nav-item {
-            padding: 12px 20px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-left: 3px solid transparent;
-            transition: all 0.3s ease;
-            color: var(--text-dark);
-        }
-
-        .nav-item:hover {
-            background-color: var(--light-bg);
-            border-left-color: var(--accent-color);
-        }
-
-        .nav-item.active {
-            background-color: rgba(0, 102, 204, 0.1);
-            border-left-color: var(--accent-color);
-            color: var(--primary-color);
-            font-weight: 600;
-        }
-
-        /* MAIN CONTENT */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .toggle-sidebar {
-            position: fixed;
-            left: 20px;
-            top: 90px;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            cursor: pointer;
-            z-index: 49;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .toggle-sidebar.show {
-            display: flex;
-        }
-
-        /* CONTENT AREA */
-        .content-wrapper {
-            flex: 1;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .map-container {
-            flex: 1;
-            position: relative;
-            display: none;
-        }
-
-        .map-container.active {
-            display: flex;
-        }
-
-        #map {
-            width: 100%;
-            height: 100%;
-        }
-
-        .map-controls {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            z-index: 10;
-        }
-
-        .map-controls .btn {
-            width: 45px;
-            height: 45px;
-            padding: 0;
-            border-radius: 50%;
-            justify-content: center;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        }
-
-        .analysis-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .analysis-container.hidden {
-            display: none;
-        }
-
-        /* FILTERS SECTION */
-        .filters-section {
-            padding: 20px;
-            background: white;
-            border-bottom: 1px solid var(--border-color);
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .filters-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .filters-header h3 {
-            font-size: 16px;
-            color: var(--primary-color);
-            margin: 0;
-        }
-
-        .search-box {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 14px;
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
-        }
-
-        .search-box:focus {
-            outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
-        }
-
-        .filters-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 12px;
-        }
-
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .filter-group label {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--primary-color);
-            margin-bottom: 5px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-
-        .filter-group select,
-        .filter-group input {
-            padding: 8px 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            font-size: 13px;
-            background: white;
-            color: var(--text-dark);
-            transition: all 0.3s ease;
-        }
-
-        .filter-group select:focus,
-        .filter-group input:focus {
-            outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
-        }
-
-        .filter-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 12px;
-        }
-
-        .filter-actions .btn {
-            flex: 1;
-            padding: 8px 12px;
-            font-size: 12px;
-        }
-
-        /* TABLE SECTION */
-        .table-section {
-            flex: 1;
-            padding: 20px;
-            background: white;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .table-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid var(--border-color);
-        }
-
-        .table-header h3 {
-            font-size: 16px;
-            color: var(--primary-color);
-            margin: 0;
-        }
-
-        .table-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .table-wrapper {
-            flex: 1;
-            overflow: auto;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            font-size: 13px;
-        }
-
-        thead {
-            background: var(--primary-color);
-            color: white;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        th {
-            padding: 12px;
-            text-align: left;
-            font-weight: 600;
-            white-space: nowrap;
-            border-right: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        td {
-            padding: 12px;
-            border-bottom: 1px solid var(--border-color);
-            border-right: 1px solid var(--border-color);
-        }
-
-        tbody tr:hover {
-            background-color: rgba(0, 102, 204, 0.05);
-        }
-
-        tbody tr:nth-child(even) {
-            background-color: #fafafa;
-        }
-
-        /* DASHBOARD */
-        .dashboard-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            padding: 20px;
-            height: 100%;
-            overflow-y: auto;
-        }
-
-        .chart-box {
-            background: white;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-        }
-
-        .chart-box h3 {
-            margin: 0 0 15px 0;
-            color: var(--primary-color);
-            font-size: 16px;
-        }
-
-        .chart-wrapper {
-            position: relative;
-            height: 300px;
-        }
-
-        /* MODAL */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.4);
-            animation: fadeIn 0.3s ease;
-        }
-
-        .modal.show {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-content {
-            background-color: white;
-            padding: 30px;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 600px;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid var(--border-color);
-        }
-
-        .modal-header h2 {
-            margin: 0;
-            color: var(--primary-color);
-        }
-
-        .close-modal {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: var(--text-light);
-        }
-
-        /* PAGINATION */
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 5px;
-            margin-top: 15px;
-            padding-top: 10px;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .pagination button {
-            padding: 6px 10px;
-            border: 1px solid var(--border-color);
-            background: white;
-            cursor: pointer;
-            border-radius: 4px;
-            font-size: 12px;
-        }
-
-        .pagination button.active {
-            background: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
-        }
-
-        .no-data {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-light);
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @media (max-width: 768px) {
-            .header {
-                padding: 15px 20px;
-            }
-
-            .header-content h1 {
-                font-size: 20px;
-            }
-
-            .home-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .sidebar {
-                width: 100%;
-                position: absolute;
-                height: 100%;
-            }
-
-            .sidebar.closed {
-                transform: translateX(-100%);
-            }
-
-            .toggle-sidebar.show {
-                display: flex;
-            }
-
-            .dashboard-container {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- HEADER -->
-    <div class="header">
-        <div class="header-content">
-            <h1>Monitoreo y Seguimiento de Condiciones Ambientales y Sociales</h1>
-            <p>Programa Mi Nueva Escuela | MINEDUCYT | BCIE 2256</p>
+
+    <!-- Header Overlay Superior -->
+    <header class="app-header">
+        <div class="header-logo">
+            <i class="fa-solid fa-leaf"></i>
+            <div>
+                <h1>MONITOREO Y SEGUIMIENTO DE CONDICIONES AMBIENTALES Y SOCIALES</h1>
+                <h2>Programa Mi Nueva Escuela MINEDUCYT BCIE 2256</h2>
+            </div>
         </div>
         <div class="header-actions">
-            <button class="btn btn-secondary" id="helpBtn" title="Ayuda">
-                <i class="fas fa-question-circle"></i> Ayuda
-            </button>
+            <!-- Selector para cargar base local -->
+            <input type="file" id="file-uploader" accept=".xlsx, .xls, .csv" style="display: none;">
+            <label for="file-uploader" class="btn btn-outline" title="Cargar Excel / CSV">
+                <i class="fa-solid fa-file-excel"></i> Cargar Datos Local
+            </label>
+            <!-- Panel configuración GitHub -->
+            <button class="btn btn-icon" id="btn-settings" title="Configurar Enlace GitHub"><i class="fa-solid fa-gear"></i></button>
+        </div>
+    </header>
+
+    <div class="app-container">
+        <!-- Sidebar Izquierdo -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-handle" id="sidebar-toggle"><i class="fa-solid fa-chevron-left"></i></div>
+            
+            <div class="sidebar-content">
+                <!-- Tarjetas Informativas -->
+                <div class="info-cards">
+                    <div class="card">
+                        <div class="card-icon"><i class="fa-solid fa-school"></i></div>
+                        <div class="card-data">
+                            <h3 id="stat-total-centros">0</h3>
+                            <p>Total Centros Escolares</p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon highlight"><i class="fa-solid fa-file-contract"></i></div>
+                        <div class="card-data">
+                            <h3 id="stat-contratos">0</h3>
+                            <p>Centros con Contrato</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Buscador General -->
+                <div class="search-box">
+                    <i class="fa-solid fa-search"></i>
+                    <input type="text" id="search-input" placeholder="Buscar Código o Centro Educativo...">
+                </div>
+
+                <!-- Sección de Filtros -->
+                <div class="filters-container">
+                    <div class="filter-header">
+                        <h4><i class="fa-solid fa-filter"></i> Filtros de Datos</h4>
+                        <button class="btn-clear" id="btn-clear-filters">Limpiar todo</button>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Departamento</label>
+                        <select id="filter-depto"><option value="">Todos</option></select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Distrito</label>
+                        <select id="filter-distrito" disabled><option value="">Todos</option></select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Grupo</label>
+                        <select id="filter-grupo"><option value="">Todos</option></select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Empresa Obras</label>
+                        <select id="filter-empresa-obras"><option value="">Todas</option></select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Empresa Supervisión</label>
+                        <select id="filter-empresa-sup"><option value="">Todas</option></select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Número de Contrato</label>
+                        <select id="filter-contrato"><option value="">Todos</option></select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Administrador del Contrato</label>
+                        <select id="filter-administrador"><option value="">Todos</option></select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Etapa</label>
+                        <select id="filter-etapa"><option value="">Todas</option></select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Estado de PEGAS Diseño</label>
+                        <select id="filter-estado-diseno"><option value="">Todos</option></select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Estado PEGAS Ejecución</label>
+                        <select id="filter-estado-ejecucion"><option value="">Todos</option></select>
+                    </div>
+                </div>
+                
+                <!-- Acciones Sidebar Inferior -->
+                <div class="sidebar-actions">
+                    <button id="btn-export-excel" class="btn btn-primary"><i class="fa-solid fa-download"></i> Exportar a Excel</button>
+                    <button id="btn-capture-map" class="btn btn-secondary"><i class="fa-solid fa-camera"></i> Capturar Vista</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Área Principal de Contenido -->
+        <main class="main-content">
+            
+            <!-- Selector de Vistas Flotante -->
+            <div class="view-tabs">
+                <button class="tab-btn active" data-target="view-map"><i class="fa-solid fa-map-location-dot"></i> Vista Mapa</button>
+                <button class="tab-btn" data-target="view-dashboard"><i class="fa-solid fa-chart-pie"></i> Dashboard</button>
+                <button class="tab-btn" data-target="view-table"><i class="fa-solid fa-table"></i> Datos</button>
+            </div>
+
+            <!-- VISTA: MAPA -->
+            <div id="view-map" class="view-panel active">
+                <div class="map-toolbar">
+                    <button id="btn-center-map" class="btn-tool" title="Centrar mapa en El Salvador"><i class="fa-solid fa-crosshairs"></i></button>
+                </div>
+                <div id="map-container"></div>
+                <!-- Box superpuesto inferior (opcional para simular visor) -->
+                <div class="map-overlay-bottom" id="capture-branding">
+                    <span id="capture-filters-text"></span>
+                </div>
+            </div>
+
+            <!-- VISTA: DASHBOARD -->
+            <div id="view-dashboard" class="view-panel">
+                <div class="dash-dynamic-header">
+                    <div class="info-cards dash-cards">
+                        <div class="card">
+                            <div class="card-icon"><i class="fa-solid fa-school"></i></div>
+                            <div class="card-data">
+                                <h3 id="dash-stat-total">0</h3>
+                                <p>Total Centros Escolares</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon highlight"><i class="fa-solid fa-file-contract"></i></div>
+                            <div class="card-data">
+                                <h3 id="dash-stat-contratos">0</h3>
+                                <p>Centros con Contrato</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dash-controls">
+                    <div class="dash-ctrl-group">
+                        <label><i class="fa-solid fa-chart-pie"></i> Tipo Gráfico</label>
+                        <select id="dash-chart-type" class="dash-select">
+                            <option value="bar">Barras Verticales</option>
+                            <option value="horizontalBar">Barras Horizontales</option>
+                            <option value="pie">Pastel</option>
+                        </select>
+                    </div>
+
+                    <!-- Fuente 1 (Eje Principal) -->
+                    <div class="dash-ctrl-group">
+                        <label>Analizar por (Variable 1)</label>
+                        <select id="dash-f1-field" class="dash-select">
+                            <option value="">Seleccione Categoría</option>
+                            <option value="Grup">Grupo</option>
+                            <option value="Centro Educativo">Centro Educativo</option>
+                            <option value="Departamento">Departamento</option>
+                            <option value="Distrito">Distrito</option>
+                            <option value="Empresa obras">Empresa Construcción</option>
+                            <option value="Empresa supervisión">Empresa Supervisión</option>
+                            <option value="Número de contrato">Número de contrato</option>
+                            <option value="Administrador de contrato">Administrador</option>
+                            <option value="Etapa">Etapa</option>
+                            <option value="Estado de PEGAS Diseño">Estado PEGAS Diseño</option>
+                            <option value="Estado PEGAS Ejecución">Estado PEGAS Ejec.</option>
+                            <option value="Accidentes acumulados">Accidentes</option>
+                            <option value="Reubicación Temporal">Reubicación</option>
+                        </select>
+                        <div class="multi-select-wrap">
+                            <div class="multi-select-placeholder" id="dash-f1-placeholder">Escoge opciones...</div>
+                            <div class="multi-select-options hidden" id="dash-f1-opts"></div>
+                        </div>
+                    </div>
+
+                    <!-- Fuente 2 (Cruce / Color) -->
+                    <div class="dash-ctrl-group">
+                        <label>Cruzar con (Variable 2)</label>
+                        <select id="dash-f2-field" class="dash-select">
+                            <option value="">Ninguno</option>
+                            <option value="Grup">Grupo</option>
+                            <option value="Centro Educativo">Centro Educativo</option>
+                            <option value="Departamento">Departamento</option>
+                            <option value="Distrito">Distrito</option>
+                            <option value="Empresa obras">Empresa Construcción</option>
+                            <option value="Empresa supervisión">Empresa Supervisión</option>
+                            <option value="Número de contrato">Número de contrato</option>
+                            <option value="Administrador de contrato">Administrador</option>
+                            <option value="Etapa">Etapa</option>
+                            <option value="Estado de PEGAS Diseño">Estado PEGAS Diseño</option>
+                            <option value="Estado PEGAS Ejecución">Estado PEGAS Ejec.</option>
+                            <option value="Accidentes acumulados">Accidentes</option>
+                            <option value="Reubicación Temporal">Reubicación</option>
+                        </select>
+                        <div class="multi-select-wrap">
+                            <div class="multi-select-placeholder" id="dash-f2-placeholder">Escoge opciones...</div>
+                            <div class="multi-select-options hidden" id="dash-f2-opts"></div>
+                        </div>
+                    </div>
+
+                    <!-- Fuente 3 (Filtro Adicional) -->
+                    <div class="dash-ctrl-group">
+                        <label>Filtrado extra (Variable 3)</label>
+                        <select id="dash-f3-field" class="dash-select">
+                            <option value="">Ninguno</option>
+                            <option value="Grup">Grupo</option>
+                            <option value="Centro Educativo">Centro Educativo</option>
+                            <option value="Departamento">Departamento</option>
+                            <option value="Distrito">Distrito</option>
+                            <option value="Empresa obras">Empresa Construcción</option>
+                            <option value="Empresa supervisión">Empresa Supervisión</option>
+                            <option value="Número de contrato">Número de contrato</option>
+                            <option value="Administrador de contrato">Administrador</option>
+                            <option value="Etapa">Etapa</option>
+                            <option value="Estado de PEGAS Diseño">Estado PEGAS Diseño</option>
+                            <option value="Estado PEGAS Ejecución">Estado PEGAS Ejec.</option>
+                            <option value="Accidentes acumulados">Accidentes</option>
+                            <option value="Reubicación Temporal">Reubicación</option>
+                        </select>
+                        <div class="multi-select-wrap">
+                            <div class="multi-select-placeholder" id="dash-f3-placeholder">Escoge opciones...</div>
+                            <div class="multi-select-options hidden" id="dash-f3-opts"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dash-chart-container">
+                    <canvas id="chartDynamic"></canvas>
+                </div>
+            </div>
+
+            <!-- VISTA: TABLA -->
+            <div id="view-table" class="view-panel">
+                <div class="table-container">
+                    <table id="data-table">
+                        <thead>
+                            <tr id="table-head-row">
+                                <!-- Se llena dinámicamente -->
+                            </tr>
+                        </thead>
+                        <tbody id="table-body">
+                            <!-- Se llena dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Map Contratos Toggle -->
+    <div id="map-contrato-toggle" style="display:none; position:absolute; top:80px; left:60px; z-index:800; background:var(--bg-panel); padding:8px 12px; border-radius:6px; border:1px solid var(--border); color:var(--text-main); font-size:12px; font-weight:500; display:flex; gap:8px; align-items:center; box-shadow:var(--shadow);">
+        <input type="checkbox" id="chk-solo-contratos" style="accent-color:var(--primary); transform:scale(1.2);">
+        <label for="chk-solo-contratos" style="cursor:pointer;">Ver solo con contrato asignado</label>
+    </div>
+
+    <!-- Modal Cargador Inicial -->
+    <div id="loading-overlay" class="loader-overlay">
+        <div class="loader-content">
+            <div class="spinner"></div>
+            <p id="loader-text">Inicializando sistema...</p>
         </div>
     </div>
 
-    <!-- HOME VIEW - Dashboard Principal -->
-    <div class="home-container active" id="homeView">
-        <div class="home-grid" id="homeGrid">
-            <!-- Las tarjetas se cargarán dinámicamente -->
-        </div>
-    </div>
-
-    <!-- MAIN CONTAINER -->
-    <div class="container" id="mainContainer">
-        <!-- SIDEBAR -->
-        <div class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <h2>Vistas</h2>
-                <button class="close-btn" id="closeSidebar" style="background: none; border: none; cursor: pointer; color: var(--primary-color); font-size: 20px;">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-
-            <div class="nav-section">
-                <div class="nav-item active" data-view="analysis">
-                    <i class="fas fa-table"></i> Análisis de Datos
-                </div>
-                <div class="nav-item" data-view="map">
-                    <i class="fas fa-map"></i> Mapa Interactivo
-                </div>
-                <div class="nav-item" data-view="dashboard">
-                    <i class="fas fa-chart-bar"></i> Dashboard
-                </div>
-            </div>
-
-            <div class="nav-section">
-                <div class="nav-title">Acciones</div>
-                <div class="nav-item" id="exportExcelBtn">
-                    <i class="fas fa-download"></i> Exportar Excel
-                </div>
-                <div class="nav-item" id="exportPdfBtn">
-                    <i class="fas fa-file-pdf"></i> Exportar PDF
-                </div>
-                <div class="nav-item" id="screenshotBtn">
-                    <i class="fas fa-camera"></i> Captura de Mapa
-                </div>
-                <div class="nav-item" id="resetBtn">
-                    <i class="fas fa-redo"></i> Restablecer
-                </div>
-            </div>
-
-            <div class="nav-section">
-                <div class="nav-title">Información</div>
-                <div class="nav-item" id="aboutBtn">
-                    <i class="fas fa-info-circle"></i> Acerca de
-                </div>
-            </div>
-        </div>
-
-        <button class="toggle-sidebar" id="toggleSidebar" title="Mostrar menú">
-            <i class="fas fa-bars"></i>
-        </button>
-
-        <!-- MAIN CONTENT -->
-        <div class="main-content">
-            <!-- ANALYSIS VIEW -->
-            <div class="analysis-container active" id="analysisView">
-                <!-- FILTERS -->
-                <div class="filters-section">
-                    <div class="filters-header">
-                        <h3>Filtros</h3>
-                    </div>
-
-                    <input type="text" class="search-box" id="searchInput" placeholder="🔍 Buscar por código o centro educativo...">
-
-                    <div class="filters-grid">
-                        <div class="filter-group">
-                            <label>Grupo</label>
-                            <select id="groupFilter">
-                                <option value="">Todos</option>
-                            </select>
-                        </div>
-
-                        <div class="filter-group">
-                            <label>Departamento</label>
-                            <select id="departmentFilter">
-                                <option value="">Todos</option>
-                            </select>
-                        </div>
-
-                        <div class="filter-group">
-                            <label>Distrito</label>
-                            <select id="districtFilter" disabled>
-                                <option value="">Todos</option>
-                            </select>
-                        </div>
-
-                        <div class="filter-group">
-                            <label>Empresa Obras</label>
-                            <select id="worksCompanyFilter">
-                                <option value="">Todos</option>
-                            </select>
-                        </div>
-
-                        <div class="filter-group">
-                            <label>Etapa</label>
-                            <select id="stageFilter">
-                                <option value="">Todos</option>
-                            </select>
-                        </div>
-
-                        <div class="filter-group">
-                            <label>Contrato</label>
-                            <select id="contractFilter">
-                                <option value="">Todos</option>
-                                <option value="contracted">Con Contrato</option>
-                                <option value="unassigned">Sin Asignar</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="filter-actions">
-                        <button class="btn btn-primary" id="applyFilters">
-                            <i class="fas fa-check"></i> Aplicar
-                        </button>
-                        <button class="btn btn-secondary" id="clearFilters">
-                            <i class="fas fa-times"></i> Limpiar
-                        </button>
-                    </div>
-                </div>
-
-                <!-- TABLE -->
-                <div class="table-section">
-                    <div class="table-header">
-                        <h3>Registros</h3>
-                        <span id="recordCount" style="font-size: 13px; color: var(--text-light);">0 registros</span>
-                    </div>
-                    <div class="table-wrapper">
-                        <table id="dataTable">
-                            <thead>
-                                <tr id="tableHeader"></tr>
-                            </thead>
-                            <tbody id="tableBody"></tbody>
-                        </table>
-                        <div id="emptyState" class="no-data" style="display: none;">
-                            No hay datos que mostrar. Ajusta los filtros.
-                        </div>
-                    </div>
-                    <div class="pagination" id="pagination"></div>
-                </div>
-            </div>
-
-            <!-- MAP VIEW -->
-            <div class="map-container" id="mapView">
-                <div id="map"></div>
-                <div class="map-controls">
-                    <button class="btn btn-primary" id="centerMap" title="Centrar en El Salvador">
-                        <i class="fas fa-crosshairs"></i>
-                    </button>
-                    <button class="btn btn-primary" id="mapScreenshot" title="Captura del mapa">
-                        <i class="fas fa-camera"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- DASHBOARD VIEW -->
-            <div class="analysis-container hidden" id="dashboardView">
-                <div class="dashboard-container">
-                    <div class="chart-box">
-                        <h3>Distribución por Departamento</h3>
-                        <div class="chart-wrapper">
-                            <canvas id="departmentChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="chart-box">
-                        <h3>Estado de Proyectos</h3>
-                        <div class="chart-wrapper">
-                            <canvas id="stageChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="chart-box">
-                        <h3>Distribución por Empresa Obras</h3>
-                        <div class="chart-wrapper">
-                            <canvas id="worksCompanyChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="chart-box">
-                        <h3>Etapas por Avance</h3>
-                        <div class="chart-wrapper">
-                            <canvas id="advanceChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODALS -->
-    <div id="aboutModal" class="modal">
+    <!-- Modal Configurar Enlace de Red -->
+    <div id="modal-settings" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h2>Acerca de esta Aplicación</h2>
-                <button class="close-modal" onclick="closeModal('aboutModal')">&times;</button>
-            </div>
-            <div>
-                <h3 style="color: var(--primary-color);">Monitoreo de Condiciones Ambientales y Sociales</h3>
-                <p><strong>Versión:</strong> 2.0</p>
-                <p><strong>Programa:</strong> Mi Nueva Escuela</p>
-                <p><strong>Institución:</strong> MINEDUCYT</p>
-                <p><strong>Financiador:</strong> BCIE 2256</p>
-                <p><strong>Desarrollo:</strong> Martín Quintanilla</p>
-
-                <h3 style="color: var(--primary-color); margin-top: 20px;">Características</h3>
-                <ul style="line-height: 1.8; margin-left: 20px;">
-                    <li>Gestión de datos de centros educativos</li>
-                    <li>Visualización geográfica en mapas interactivos</li>
-                    <li>Análisis estadístico en tiempo real</li>
-                    <li>Exportación en Excel y PDF</li>
-                    <li>Captura de pantalla de mapas</li>
-                    <li>Interfaz responsiva y moderna</li>
-                </ul>
+            <h3><i class="fa-solid fa-link"></i> Configurar Fuente de Datos GitHub</h3>
+            <p>Introduce la URL 'Raw' del archivo Excel cargado en GitHub para que se sincronice automáticamente al abrir.</p>
+            <input type="text" id="input-github-url" class="form-control" placeholder="https://raw.githubusercontent.com/.../bdatos_bcie26.xlsx">
+            <div class="modal-actions">
+                <button class="btn btn-outline" id="btn-close-settings">Cancelar</button>
+                <button class="btn btn-primary" id="btn-save-settings">Guardar y Recargar</button>
             </div>
         </div>
     </div>
 
-    <div id="helpModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Ayuda y Guía de Uso</h2>
-                <button class="close-modal" onclick="closeModal('helpModal')">&times;</button>
-            </div>
-            <div>
-                <h3 style="color: var(--primary-color);">Funcionalidades Principales</h3>
-                <ul style="line-height: 1.8; margin-left: 20px;">
-                    <li><strong>Análisis de Datos:</strong> Visualiza y filtra todos los registros.</li>
-                    <li><strong>Mapa Interactivo:</strong> Localiza centros en El Salvador.</li>
-                    <li><strong>Dashboard:</strong> Análisis cruzado con gráficos.</li>
-                    <li><strong>Exportar:</strong> Descarga datos en Excel o PDF.</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-
-    <script src="app-v2.js"></script>
+    <!-- Scripts Externos -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Script Interno -->
+    <script src="app.js"></script>
 </body>
 </html>
